@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>La Boucle Maudite — Chrono</title>
+<title>La Boucle Maudite — Chrono v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
 <style>
@@ -453,8 +453,16 @@ function pushState(){
   fetch(NTFY+sync.topic,{method:'POST',body:JSON.stringify(s)}).catch(()=>{});
 }
 function unlockAudio(){
-  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
-  loadLaugh().catch(()=>{});const u0=new SpeechSynthesisUtterance(' ');u0.volume=0;speechSynthesis.speak(u0)}catch(e){}
+  let p=Promise.resolve(false);
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    const r=ac.resume?ac.resume():Promise.resolve();
+    const b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);
+    loadLaugh().catch(()=>{});
+    p=Promise.resolve(r).then(()=>ac.state==='running').catch(()=>false);
+  }catch(e){}
+  try{const u0=new SpeechSynthesisUtterance(' ');u0.volume=0;speechSynthesis.getVoices();speechSynthesis.speak(u0)}catch(e){}
+  return p;
 }
 function applyState(s){
   sync.applying=true;
@@ -513,7 +521,9 @@ function handleMsg(raw){
     $('sharebox').style.display='none';
     spec.hidden=true;
     const ic=document.createElement('div');ic.id='snd';ic.textContent='🔇';ic.setAttribute('aria-label','Touche pour activer le son');document.body.appendChild(ic);
-    document.addEventListener('pointerdown',()=>{unlockAudio();ic.remove()},{once:true});
+    const EVS=['pointerup','click','touchend','keydown'];
+    const un=()=>{unlockAudio().then(ok=>{if(ok){ic.remove();EVS.forEach(ev=>document.removeEventListener(ev,un,true))}})};
+    EVS.forEach(ev=>document.addEventListener(ev,un,true));
     try{
       const es=new EventSource(NTFY+sync.topic+'/sse?since=latest');
       es.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.event==='message')handleMsg(m.message)}catch(_){}};
