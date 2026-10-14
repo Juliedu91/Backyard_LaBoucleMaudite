@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>La Boucle Maudite — Chrono v9</title>
+<title>La Boucle Maudite — Chrono v10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
 <style>
@@ -156,7 +156,7 @@ body:not(.spectator) #laps{display:none}
       <label>Musique stressante<input id="music" type="checkbox" checked style="width:28px;height:28px"></label>
       <label>Vibration<input id="vibe" type="checkbox" checked style="width:28px;height:28px"></label>
     </div>
-    <p>Astuce : mets 1 minute pour tester le chrono.</p><div class="set"><button onclick="laugh(9,165,.7)" style="font-size:16px;padding:10px">🎃 Tester le rire</button><button onclick="say('Préparez-vous pour le prochain tour')" style="font-size:16px;padding:10px">🎙️ Tester la voix</button><button onclick="musicTest()" style="font-size:16px;padding:10px">🎵 Tester la musique</button><button onclick="var ok=navigator.vibrate&&navigator.vibrate([500,150,500]);$('shmsg').textContent=ok?'Vibration envoyée ✔':'Vibration non disponible sur cet appareil'" style="font-size:16px;padding:10px">📳 Tester la vibration</button></div>
+    <p>Astuce : mets 1 minute pour tester le chrono.</p><div class="set"><button onclick="laugh(9,165,.7)" style="font-size:16px;padding:10px">🎃 Tester le rire</button><button onclick="say('Préparez-vous pour le prochain tour')" style="font-size:16px;padding:10px">🎙️ Tester la voix</button><button onclick="musicTest()" style="font-size:16px;padding:10px">🎵 Tester la musique</button><button onclick="var ok=buzz([500,150,500]);$('shmsg').textContent=ok?'Vibration envoyée ✔':'Vibration non disponible sur cet appareil'" style="font-size:16px;padding:10px">📳 Tester la vibration</button></div>
   <div class="set" id="sharebox"><button id="copyview" style="font-size:16px;padding:10px">🔗 Lien spectateur</button><button id="copyctl" style="font-size:16px;padding:10px">🔑 Lien contrôle</button></div><p class="label" id="shmsg" style="word-break:break-all"></p>
   </details>
   <details id="msgbox" open>
@@ -231,14 +231,38 @@ async function loadLaugh(){
 }
 // n>=9: rire complet ; n>=3: début du rire ; sinon: un court "ha"
 let lastLaugh=null,laughScheduled=false,laughBus=null,vibT=null;
+// ---- Vibration : Android = navigator.vibrate, iPhone = astuce du "switch" (taptic) ----
+const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const HAPTIC_OK=!!navigator.vibrate||IOS;
+let hapLb=null,buzzIds=[];
+if(IOS&&!navigator.vibrate){
+  const inp=document.createElement('input');inp.type='checkbox';inp.id='hapsw';inp.setAttribute('switch','');
+  const lb=document.createElement('label');lb.htmlFor='hapsw';
+  const css='position:fixed;left:-120px;top:0;width:60px;height:30px;opacity:0;pointer-events:none';
+  inp.style.cssText=css;lb.style.cssText=css;
+  document.body.appendChild(inp);document.body.appendChild(lb);hapLb=lb;
+}
+function hapTick(){try{hapLb&&hapLb.click()}catch(e){}}
+function buzz(p){
+  buzzStop();
+  if(navigator.vibrate)return navigator.vibrate(p);
+  if(!hapLb)return false;
+  let t=0;
+  p.forEach((d,i)=>{if(i%2===0){for(let k=0;k<d;k+=60)buzzIds.push(setTimeout(hapTick,t+k))}t+=d});
+  return true;
+}
+function buzzStop(){
+  try{if(navigator.vibrate)navigator.vibrate(0)}catch(e){}
+  buzzIds.forEach(clearTimeout);buzzIds=[];
+}
 function vib(delayMs){
   clearTimeout(vibT);
-  if(!$('vibe').checked||!navigator.vibrate)return;
-  vibT=setTimeout(()=>{try{navigator.vibrate([700,150,700,150,1000])}catch(e){}},Math.max(0,delayMs));
+  if(!$('vibe').checked||!HAPTIC_OK)return;
+  vibT=setTimeout(()=>{try{buzz([700,150,700,150,1000])}catch(e){}},Math.max(0,delayMs));
 }
 function stopLaugh(){
   try{lastLaugh&&lastLaugh.stop()}catch(e){}lastLaugh=null;laughScheduled=false;
-  clearTimeout(vibT);try{navigator.vibrate&&navigator.vibrate(0)}catch(e){}
+  clearTimeout(vibT);try{buzzStop()}catch(e){}
 }
 function laugh(n=9,base=165,vol=.7,when=0){
   loadLaugh().then(buf=>{
@@ -668,7 +692,7 @@ function markLap(){
   const i=myLaps.findIndex(x=>x.race===e.race&&x.lap===e.lap);
   if(i>=0)myLaps[i]=e;else myLaps.push(e);
   saveLaps();renderLaps();
-  try{if($('vibe').checked&&navigator.vibrate)navigator.vibrate(60)}catch(_){}
+  try{if($('vibe').checked)buzz([60])}catch(_){}
   $('lapinfo').textContent='Tour '+c.lap+' marqué à '+mmss(c.inLap)+(i>=0?' (mis à jour)':' ✔');
 }
 $('lapmark').onclick=markLap;
