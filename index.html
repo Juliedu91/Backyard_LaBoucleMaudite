@@ -95,8 +95,8 @@ html.fs .lap{font-size:38px}
 html.fs .logo{width:96px}
 html.fs h1{font-size:30px;margin-bottom:8px}
 html.fs details{display:none}
-.spectator .btns{display:none}
-.spectator #seek{pointer-events:none}
+.spectator .btns,.spectator details,.spectator #seek,.spectator #spec{display:none}
+#snd{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:3;font-size:22px;opacity:.55;cursor:pointer}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -511,8 +511,9 @@ function handleMsg(raw){
   }else{
     document.body.classList.add('spectator');
     $('sharebox').style.display='none';
-    spec.textContent='👀 Spectateur synchronisé — touche l\'écran une fois pour activer le son';
-    document.addEventListener('pointerdown',()=>{unlockAudio();spec.textContent='👀 Spectateur synchronisé · son activé'},{once:true});
+    spec.hidden=true;
+    const ic=document.createElement('div');ic.id='snd';ic.textContent='🔇';ic.setAttribute('aria-label','Touche pour activer le son');document.body.appendChild(ic);
+    document.addEventListener('pointerdown',()=>{unlockAudio();ic.remove()},{once:true});
     try{
       const es=new EventSource(NTFY+sync.topic+'/sse?since=latest');
       es.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.event==='message')handleMsg(m.message)}catch(_){}};
