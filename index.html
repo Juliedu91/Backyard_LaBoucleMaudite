@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>La Boucle Maudite — Chrono v7</title>
+<title>La Boucle Maudite — Chrono v9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
 <style>
@@ -101,6 +101,14 @@ html.fs details{display:none}
 #bcast::before{content:"📣 "}
 @keyframes bcast{50%{box-shadow:0 0 38px rgba(255,150,40,.95)}}
 html.fs #bcast{font-size:26px}
+#laps{margin-top:14px}
+#laplist{max-height:38vh;overflow:auto;text-align:left;font-size:14px;margin-top:8px;border:1px solid var(--bd);border-radius:12px;padding:6px 10px;background:var(--card)}
+.lhead{color:var(--mut);font-size:12px;margin:8px 0 2px}
+.lrow{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;padding:4px 0;border-bottom:1px solid var(--bd);font-variant-numeric:tabular-nums}
+.lrow b{color:var(--acc)}
+.lrow i{color:var(--mut);font-style:normal;font-size:12px}
+html.fs #laps{display:none}
+body:not(.spectator) #laps{display:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -123,6 +131,15 @@ html.fs #bcast{font-size:26px}
   <div class="stats">
     <div class="stat"><span class="label">Temps total</span><b id="total">00:00:00</b></div>
     <div class="stat"><span class="label">Distance</span><b id="dist">0,0 km</b></div>
+  </div>
+  <div id="laps">
+    <button id="lapmark" class="main" disabled style="width:100%;font-size:26px;padding:14px">✅ Tour terminé</button>
+    <div class="label" id="lapinfo" style="margin-top:6px;min-height:16px"></div>
+    <button id="lapshow" style="width:100%;font-size:18px;padding:10px;margin-top:6px">📋 Mes tours (0)</button>
+    <div id="lapbox" hidden>
+      <div id="laplist"></div>
+      <div class="set" style="margin-top:8px"><button id="lapundo" style="font-size:16px;padding:8px">Annuler le dernier</button><button id="lapcopy" style="font-size:16px;padding:8px">Copier</button><button id="lapclear" style="font-size:16px;padding:8px">Tout effacer</button></div>
+    </div>
   </div>
   <div class="btns">
     <button class="main" id="start">Démarrer</button>
@@ -614,6 +631,73 @@ setInterval(()=>{
   refreshSnd();
 },1000);
 refreshSnd();
+
+// ---- Mes tours (historique personnel, stocké sur l'appareil) ----
+const LKEY='bm_laps_'+sync.room;
+let myLaps=[],lapClrT=null;
+try{myLaps=JSON.parse(localStorage.getItem(LKEY)||'[]')}catch(e){}
+const saveLaps=()=>{try{localStorage.setItem(LKEY,JSON.stringify(myLaps))}catch(e){}};
+const hms=ms=>{const s=Math.max(0,Math.floor(ms/1000));return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60)};
+const mmss=ms=>fmt(Math.floor(ms/1000));
+const kmTxt=k=>(Math.round(k*10)/10).toFixed(1).replace('.',',')+' km';
+const clk=t=>new Date(t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+function curLapInfo(){
+  if(!startAt)return null;
+  const lapMs=Math.max(0.1,parseFloat($('dur').value)||60)*60000;
+  const el=nowT()-startAt;
+  return {lap:Math.floor(el/lapMs)+1,inLap:el%lapMs,total:el};
+}
+function renderLaps(){
+  $('lapshow').textContent='📋 Mes tours ('+myLaps.length+')';
+  const races=[...new Set(myLaps.map(x=>x.race))].sort((a,b)=>b-a);
+  let out='';
+  if(!races.length)out='<div class="label" style="padding:8px 0">Aucun tour enregistré pour le moment.</div>';
+  races.forEach(r=>{
+    const L=myLaps.filter(x=>x.race===r).sort((a,b)=>a.lap-b.lap);
+    const avg=L.reduce((s,x)=>s+x.tLap,0)/L.length;
+    const d=new Date(r);
+    out+='<div class="lhead">Course du '+d.toLocaleDateString('fr-FR')+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' — '+L.length+' tour'+(L.length>1?'s':'')+' · moy. '+mmss(avg)+' · '+kmTxt(L[L.length-1].km)+'</div>';
+    L.forEach(x=>{out+='<div class="lrow"><span>Tour <b>'+x.lap+'</b></span><span><b>'+mmss(x.tLap)+'</b></span><span>cumul '+hms(x.tTot)+'</span><span>'+kmTxt(x.km)+'</span><i>'+clk(x.at)+'</i></div>'});
+  });
+  $('laplist').innerHTML=out;
+}
+function markLap(){
+  const c=curLapInfo();if(!c)return;
+  const km=parseFloat($('km').value)||0;
+  const e={race:startAt,lap:c.lap,tLap:Math.round(c.inLap),tTot:Math.round(c.total),at:Date.now(),km:Math.round(c.lap*km*100)/100};
+  const i=myLaps.findIndex(x=>x.race===e.race&&x.lap===e.lap);
+  if(i>=0)myLaps[i]=e;else myLaps.push(e);
+  saveLaps();renderLaps();
+  try{if($('vibe').checked&&navigator.vibrate)navigator.vibrate(60)}catch(_){}
+  $('lapinfo').textContent='Tour '+c.lap+' marqué à '+mmss(c.inLap)+(i>=0?' (mis à jour)':' ✔');
+}
+$('lapmark').onclick=markLap;
+$('lapshow').onclick=()=>{const b=$('lapbox');b.hidden=!b.hidden;if(!b.hidden)renderLaps()};
+$('lapundo').onclick=()=>{
+  if(!myLaps.length)return;
+  let k=0;myLaps.forEach((x,i)=>{if(x.at>myLaps[k].at)k=i});
+  const x=myLaps.splice(k,1)[0];saveLaps();renderLaps();
+  $('lapinfo').textContent='Tour '+x.lap+' supprimé';
+};
+$('lapcopy').onclick=()=>{
+  const rows=['course;tour;temps_au_tour;temps_total;distance_km;heure'];
+  [...myLaps].sort((a,b)=>a.race-b.race||a.lap-b.lap).forEach(x=>rows.push([new Date(x.race).toLocaleString('fr-FR'),x.lap,mmss(x.tLap),hms(x.tTot),String(x.km).replace('.',','),clk(x.at)].join(';')));
+  const txt=rows.join('\n');
+  const done=()=>{$('lapinfo').textContent='Historique copié ✔'};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,()=>{$('laplist').textContent=txt});
+  else $('laplist').textContent=txt;
+};
+$('lapclear').onclick=()=>{
+  if(lapClrT){clearTimeout(lapClrT);lapClrT=null;myLaps=[];saveLaps();renderLaps();$('lapclear').textContent='Tout effacer';return}
+  $('lapclear').textContent='Confirmer ?';
+  lapClrT=setTimeout(()=>{lapClrT=null;$('lapclear').textContent='Tout effacer'},3000);
+};
+setInterval(()=>{
+  const c=curLapInfo(),b=$('lapmark');
+  b.disabled=!c;
+  b.textContent=c?'✅ Tour '+c.lap+' terminé':'✅ Tour terminé';
+},500);
+renderLaps();
 document.addEventListener('visibilitychange',()=>{if(startAt&&!document.hidden)lock()});
 </script>
 </body>
