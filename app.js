@@ -1,3 +1,4 @@
+// ---- Interface et état du chronomètre ----
 const $=id=>document.getElementById(id);
 let startAt=null,timer=null,lastLap=0,lastSec=null,ac=null,wl=null,zoneFired=false,pausedAt=null,seeking=false;
 function ensureAudioContext(){
@@ -48,6 +49,7 @@ function tick(){
   }
 }
 
+// ---- Sons et retours haptiques ----
 let laughBuf=null;
 async function loadLaugh(){
   if(laughBuf)return laughBuf;
@@ -159,6 +161,7 @@ function say(txt,rate=.85){
     duck(txt.length>12?3.2:1.1);speechSynthesis.cancel();speechSynthesis.speak(u);
   }catch(e){}
 }
+// ---- Musique ambiante ----
 let mus=null,musTest=false,duckT=null;
 function kick(t,v){
   const o=ac.createOscillator(),g=ac.createGain();
@@ -228,6 +231,7 @@ function musicTest(){
   musTest=true;musicStop();musicUpdate(.8);
   setTimeout(()=>{musTest=false;if(!startAt)musicStop()},7000);
 }
+// ---- Contrôles et plein écran ----
 async function lock(){try{wl=await navigator.wakeLock.request('screen')}catch(e){}}
 $('start').onclick=()=>{
   if(startAt)return;
