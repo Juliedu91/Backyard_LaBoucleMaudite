@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0716">
+  <title>Administration — La Boucle Maudite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Lilita+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="moon" aria-hidden="true"></div>
+  <span class="bat" aria-hidden="true">🦇</span>
+  <span class="bat" aria-hidden="true">🦇</span>
+  <span class="bat" aria-hidden="true">🦇</span>
+  <span class="bat" aria-hidden="true">🦇</span>
+  <div class="ground" aria-hidden="true"></div>
+
+  <main class="app admin-app">
+    <a class="back-link" href="index.html">← Retour au chrono</a>
+    <h1>Tableau des équipes</h1>
+    <p class="admin-intro">Ajoute le nom et le code de salle de chaque équipe pour suivre tous les chronos ici.</p>
+
+    <section class="card admin-panel" aria-labelledby="add-team-title">
+      <h2 id="add-team-title">Ajouter une équipe</h2>
+      <form id="team-form" class="admin-form">
+        <label>
+          Nom de l’équipe
+          <input id="team-name" name="team-name" type="text" maxlength="40" autocomplete="off" required placeholder="Ex. Les Sorcières">
+        </label>
+        <label>
+          Code de salle
+          <input id="team-room" name="team-room" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" required placeholder="Affiché sur la page de contrôle">
+        </label>
+        <button class="main" type="submit">Ajouter</button>
+      </form>
+      <p id="form-message" class="form-message" role="status" aria-live="polite"></p>
+      <details class="admin-help">
+        <summary>Où trouver le code de salle ?</summary>
+        <p>Sur la page de contrôle de l’équipe, le code apparaît à côté de « Diffusion active — salle ». Ajoute chaque code une seule fois. La liste est conservée dans ce navigateur, sur cet appareil.</p>
+      </details>
+    </section>
+
+    <div class="dashboard-heading">
+      <h2>Chronos en direct</h2>
+      <p id="connection-summary" class="connection-summary" role="status" aria-live="polite">Connexion aux salles…</p>
+    </div>
+    <section id="team-list" class="team-grid" aria-label="Chronos des équipes"></section>
+    <p id="empty-state" class="empty-state" hidden>Aucune équipe ajoutée. Saisis un nom et un code de salle ci-dessus pour commencer.</p>
+  </main>
+
+  <script src="admin.js" defer></script>
+</body>
+</html>
