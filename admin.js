@@ -309,3 +309,17 @@ teamList.addEventListener('click', event => {
 for (const team of teams) registerTeam(team);
 render();
 setInterval(render, 1000);
+window.addEventListener('storage', event => {
+  if (event.key !== STORAGE_KEY) return;
+  const updated = loadTeams();
+  for (const [room, stream] of streams) {
+    if (!updated.some(team => team.room === room)) {
+      stream.close();
+      streams.delete(room);
+      states.delete(room);
+    }
+  }
+  teams = updated;
+  for (const team of teams) if (!streams.has(team.room)) registerTeam(team);
+  render();
+});

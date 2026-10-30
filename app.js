@@ -399,6 +399,71 @@ function handleMsg(raw){
   }
 })();
 
+// ---- Création de salles d'équipe depuis la page de contrôle ----
+const ADMIN_TEAMS_KEY='bm_admin_teams_v1';
+const CREATED_ROOMS_KEY='bm_created_rooms_v1';
+function makeRoomCode(){
+  const bytes=new Uint8Array(9);crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(36).padStart(2,'0')).join('').slice(0,15);
+}
+function roomLink(room,view=false){
+  return baseUrl()+'?room='+encodeURIComponent(room)+(view?'&view=1':'');
+}
+function copyRoomLink(url,label){
+  const status=$('room-create-status');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>{status.textContent='Lien '+label+' copié ✔'},()=>{status.textContent='Copie ce lien '+label+' : '+url});
+  }else status.textContent='Copie ce lien '+label+' : '+url;
+}
+function loadCreatedRooms(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(CREATED_ROOMS_KEY)||'[]');
+    return Array.isArray(saved)?saved.filter(x=>x&&typeof x.name==='string'&&typeof x.room==='string'):[];
+  }catch(e){return []}
+}
+function saveCreatedRoom(name,room){
+  const rooms=loadCreatedRooms();
+  rooms.push({name,room});
+  try{localStorage.setItem(CREATED_ROOMS_KEY,JSON.stringify(rooms))}catch(e){}
+  try{
+    const teams=JSON.parse(localStorage.getItem(ADMIN_TEAMS_KEY)||'[]');
+    const list=Array.isArray(teams)?teams:[];
+    if(!list.some(x=>x&&x.room===room))list.push({name,room});
+    localStorage.setItem(ADMIN_TEAMS_KEY,JSON.stringify(list));
+  }catch(e){}
+}
+function renderCreatedRooms(){
+  const list=$('created-room-list');list.replaceChildren();
+  loadCreatedRooms().forEach(item=>{
+    const card=document.createElement('article');card.className='created-room';
+    const title=document.createElement('strong');title.textContent=item.name;
+    const code=document.createElement('span');code.className='label';code.textContent='Salle : '+item.room;
+    const actions=document.createElement('div');actions.className='set';
+    const addLink=(text,url,label)=>{
+      const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent='Ouvrir '+text;
+      const copy=document.createElement('button');copy.type='button';copy.textContent='Copier '+text;copy.addEventListener('click',()=>copyRoomLink(url,label));
+      actions.append(a,copy);
+    };
+    addLink('le lien spectateur',roomLink(item.room,true),'spectateur');
+    addLink('le contrôle',roomLink(item.room),'de contrôle');
+    card.append(title,code,actions);list.append(card);
+  });
+}
+if(sync.canWrite){
+  $('room-create-form').addEventListener('submit',event=>{
+    event.preventDefault();
+    const name=$('room-name').value.trim().slice(0,40);
+    if(!name)return;
+    const known=new Set(loadCreatedRooms().map(x=>x.room));
+    let newRoom;do{newRoom=makeRoomCode()}while(newRoom===room||known.has(newRoom));
+    saveCreatedRoom(name,newRoom);
+    $('room-name').value='';
+    $('room-create-status').textContent='Salle créée et ajoutée au tableau des équipes. Envoie le lien spectateur correspondant au groupe.';
+    renderCreatedRooms();
+  });
+  renderCreatedRooms();
+}else $('room-manager').hidden=true;
+
 // ---- Messages aux spectateurs ----
 const MSGT=NTFY+sync.topic+'-msg';
 let bcastT=null,lastMsgId=null;

@@ -221,6 +221,52 @@ h1 {
   margin:6px 0 0;
   color:var(--warn)
 }
+.room-manager {
+  margin-top:14px;
+  padding:12px;
+  border:1px solid var(--bd);
+  border-radius:12px;
+  background:rgba(13,7,22,.45)
+}
+.room-manager h3 {
+  margin:0 0 6px;
+  color:var(--acc)
+}
+.room-create-form {
+  align-items:end
+}
+.room-create-form label {
+  flex:1 1 180px
+}
+.room-create-form input {
+  min-width:0;
+  width:100%;
+  padding:10px;
+  border:1px solid var(--bd);
+  border-radius:8px;
+  background:#1a0b2e;
+  color:var(--fg);
+  font:inherit
+}
+.created-room-list {
+  display:grid;
+  gap:8px
+}
+.created-room {
+  display:grid;
+  gap:5px;
+  padding:10px;
+  border:1px solid var(--bd);
+  border-radius:9px
+}
+.created-room .set {
+  justify-content:flex-start;
+  margin:0
+}
+.created-room a {
+  color:var(--ok);
+  font-size:14px
+}
 .stats {
   display:grid;
   grid-template-columns:1fr 1fr;

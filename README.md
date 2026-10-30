@@ -16,9 +16,11 @@ Dans VS Code, ouvre le dossier du dépôt et lance `index.html` avec l’extensi
 
 La synchronisation utilise ntfy.sh et les polices sont chargées depuis Google Fonts : une connexion Internet est nécessaire pour ces fonctions.
 
-## Tableau des équipes
+## Créer plusieurs salles et suivre les équipes
 
-Ouvre `admin.html` sur l’appareil de l’organisateur. Pour chaque équipe, ajoute un nom et le code affiché après « Diffusion active — salle » sur sa page de contrôle. La liste est conservée dans le stockage local du navigateur de l’organisateur; elle n’est pas partagée avec les participants ni avec ses autres appareils.
+Depuis une page de contrôle `index.html`, ouvre **Réglages**, saisis le nom d’un groupe dans **Créer plusieurs salles**, puis clique **Créer la salle**. Répète l’action pour chaque groupe. Chaque salle reçoit un code indépendant et deux liens : envoie **Ouvrir le lien spectateur** au groupe concerné et garde **Ouvrir le contrôle** pour les organisateurs.
+
+Les salles créées sont ajoutées automatiquement au tableau `admin.html` dans le même navigateur. Si le tableau est déjà ouvert, il se met à jour; sinon ouvre-le après la création. La liste est conservée dans le stockage local de l’organisateur et ne se partage pas entre appareils. Pour suivre ces salles sur un autre navigateur/appareil, ajoute manuellement chaque nom et code de salle dans le tableau.
 
 Le tableau se met à jour à partir des mêmes salles ntfy.sh que les pages de contrôle et de spectateur. Les codes de salle donnent accès à ces flux; partage-les uniquement avec les personnes qui en ont besoin.
 
