@@ -312,6 +312,7 @@ if(!room){
 }
 try{localStorage.setItem('bm_room',room)}catch(e){}
 const isView=qs.get('view')==='1';
+const teamName=(qs.get('team')||'').trim().slice(0,40);
 const sync={room,topic:'boucle-maudite-'+room,canWrite:!isView,applying:false,lastV:0};
 if(!qs.get('room')){try{const u=new URL(location.href);u.searchParams.set('room',room);history.replaceState(null,'',u)}catch(e){}}
 function baseUrl(){return location.origin==='null'||location.protocol==='file:'?location.href.split('?')[0]:location.origin+location.pathname}
@@ -321,6 +322,23 @@ function pushState(){
     dur:parseFloat($('dur').value)||60,km:parseFloat($('km').value)||0,pct:parseFloat($('pct').value)||8.33,scream:$('scream').checked,v:Date.now()};
   sync.lastV=s.v;
   fetch(NTFY+sync.topic,{method:'POST',body:JSON.stringify(s)}).catch(()=>{});
+}
+function renderRoomRole(){
+  const role=$('room-role');
+  role.hidden=false;
+  if(isView){
+    role.className='room-role spectator-role';
+    role.textContent='👥 PAGE PARTICIPANTS — '+(teamName||'Salle '+room);
+    document.title=(teamName||'Participants')+' — La Boucle Maudite';
+  }else if(teamName){
+    role.className='room-role team-admin-role';
+    role.textContent='🛠 ADMIN ÉQUIPE — '+teamName;
+    document.title='Admin — '+teamName+' — La Boucle Maudite';
+  }else{
+    role.className='room-role main-admin-role';
+    role.textContent='👑 ADMIN PRINCIPAL — Création et gestion des salles';
+    document.title='Admin principal — La Boucle Maudite';
+  }
 }
 function unlockAudio(){
   let p=Promise.resolve(false);
@@ -368,9 +386,9 @@ function handleMsg(raw){
 ['dur','km','pct','scream'].forEach(id=>$(id).addEventListener('change',pushState));
 (function initSync(){
   const spec=$('spec');spec.hidden=false;
+  renderRoomRole();
   const links=()=>{
-    const b=baseUrl();
-    return {view:b+'?room='+sync.room+'&view=1',ctl:b+'?room='+sync.room};
+    return {view:roomLink(sync.room,true,teamName),ctl:roomLink(sync.room,false,teamName)};
   };
   const copy=(txt,msg)=>{
     const done=()=>{$('shmsg').textContent=msg};
@@ -406,8 +424,8 @@ function makeRoomCode(){
   const bytes=new Uint8Array(9);crypto.getRandomValues(bytes);
   return Array.from(bytes,b=>b.toString(36).padStart(2,'0')).join('').slice(0,15);
 }
-function roomLink(room,view=false){
-  return baseUrl()+'?room='+encodeURIComponent(room)+(view?'&view=1':'');
+function roomLink(room,view=false,name=''){
+  return baseUrl()+'?room='+encodeURIComponent(room)+(view?'&view=1':'')+(name?'&team='+encodeURIComponent(name):'');
 }
 function copyRoomLink(url,label){
   const status=$('room-create-status');
@@ -440,16 +458,17 @@ function renderCreatedRooms(){
     const code=document.createElement('span');code.className='label';code.textContent='Salle : '+item.room;
     const actions=document.createElement('div');actions.className='set';
     const addLink=(text,url,label)=>{
-      const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent='Ouvrir '+text;
-      const copy=document.createElement('button');copy.type='button';copy.textContent='Copier '+text;copy.addEventListener('click',()=>copyRoomLink(url,label));
-      actions.append(a,copy);
+      const heading=document.createElement('span');heading.className='room-link-label';heading.textContent=label;
+      const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent='Ouvrir cette page';
+      const copy=document.createElement('button');copy.type='button';copy.textContent='Copier ce lien';copy.addEventListener('click',()=>copyRoomLink(url,label));
+      const group=document.createElement('div');group.className='room-link-group';group.append(heading,a,copy);actions.append(group);
     };
-    addLink('le lien spectateur',roomLink(item.room,true),'spectateur');
-    addLink('le contrôle',roomLink(item.room),'de contrôle');
+    addLink('👥 LIEN PARTICIPANTS — à envoyer au groupe',roomLink(item.room,true,item.name),'participants');
+    addLink('🛠 LIEN ADMIN ÉQUIPE — à garder privé',roomLink(item.room,false,item.name),'admin équipe');
     card.append(title,code,actions);list.append(card);
   });
 }
-if(sync.canWrite){
+if(sync.canWrite&&!teamName){
   $('room-create-form').addEventListener('submit',event=>{
     event.preventDefault();
     const name=$('room-name').value.trim().slice(0,40);

@@ -221,6 +221,38 @@ h1 {
   margin:6px 0 0;
   color:var(--warn)
 }
+.room-role {
+  margin:0 0 10px;
+  padding:9px 12px;
+  border:1px solid var(--acc);
+  border-radius:10px;
+  color:var(--fg);
+  background:rgba(13,7,22,.7);
+  font-size:14px;
+  font-weight:800;
+  text-align:center
+}
+.spectator-role {
+  border-color:var(--ok);
+  color:var(--ok)
+}
+.team-admin-role {
+  border-color:var(--warn);
+  color:var(--warn)
+}
+.room-link-group {
+  display:grid;
+  gap:4px;
+  justify-items:start;
+  width:100%;
+  padding:8px 0;
+  border-top:1px solid var(--bd)
+}
+.room-link-label {
+  color:var(--fg);
+  font-size:13px;
+  font-weight:700
+}
 .room-manager {
   margin-top:14px;
   padding:12px;

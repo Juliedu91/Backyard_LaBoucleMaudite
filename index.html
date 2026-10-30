@@ -16,6 +16,7 @@
 <div class="app">
   <div class="logobox"><img class="logo" src="assets/logo.png" alt="La Boucle Maudite"><i class="lshadow"></i></div>
   <h1>La Boucle Maudite</h1>
+  <div class="room-role" id="room-role" hidden></div>
   <div class="label" id="spec" hidden style="margin-bottom:10px;font-weight:700"></div>
   <div id="bcast" hidden></div>
   <div class="card">
@@ -57,7 +58,7 @@
     <p>Astuce : mets 1 minute pour tester le chrono.</p><div class="set"><button onclick="laugh(9,165,.7)" style="font-size:16px;padding:10px">🎃 Tester le rire</button><button onclick="say('Préparez-vous pour le prochain tour')" style="font-size:16px;padding:10px">🎙️ Tester la voix</button><button onclick="musicTest()" style="font-size:16px;padding:10px">🎵 Tester la musique</button><button onclick="var ok=buzz([500,150,500]);$('shmsg').textContent=ok?'Vibration envoyée ✔':'Vibration non disponible sur cet appareil'" style="font-size:16px;padding:10px">📳 Tester la vibration</button><button onclick="jumpscare()" style="font-size:16px;padding:10px">👻 Tester le screamer</button></div>
   <div class="set" id="sharebox"><button id="copyview" style="font-size:16px;padding:10px">🔗 Lien spectateur</button><button id="copyctl" style="font-size:16px;padding:10px">🔑 Lien contrôle</button></div><p class="label" id="shmsg" style="word-break:break-all"></p>
   <section class="room-manager" id="room-manager" aria-labelledby="room-manager-title">
-    <h3 id="room-manager-title">Créer plusieurs salles</h3>
+    <h3 id="room-manager-title">👑 ADMIN PRINCIPAL — Créer les salles</h3>
     <p class="label">Chaque salle a son chrono indépendant. Crée une salle par groupe, puis envoie à chacun son lien spectateur.</p>
     <form id="room-create-form" class="set room-create-form">
       <label for="room-name">Nom de l’équipe</label>
