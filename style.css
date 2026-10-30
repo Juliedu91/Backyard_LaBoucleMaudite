@@ -217,6 +217,10 @@ h1 {
   font-size:13px;
   color:var(--mut)
 }
+.haptic-note {
+  margin:6px 0 0;
+  color:var(--warn)
+}
 .stats {
   display:grid;
   grid-template-columns:1fr 1fr;

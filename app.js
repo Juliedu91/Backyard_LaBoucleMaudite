@@ -1,6 +1,7 @@
 // ---- Interface et état du chronomètre ----
 const $=id=>document.getElementById(id);
 let startAt=null,timer=null,lastLap=0,lastSec=null,ac=null,wl=null,zoneFired=false,pausedAt=null,seeking=false;
+let hapticMilestones=new Set();
 function ensureAudioContext(){
   if(ac)return ac;
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
@@ -36,8 +37,13 @@ function tick(){
   $('total').textContent=pad(Math.floor(t/3600))+':'+pad(Math.floor(t%3600/60))+':'+pad(t%60);
   $('dist').textContent=((lap-1)*km).toFixed(1).replace('.',',')+' km';
   $('sub').textContent=pausedAt?'⏸ EN PAUSE':inZone?'⚠️ Rejoins la ligne de départ !':'Avant d’être éliminé…';
-  if(lap!==lastLap){ if(lastLap){if(!laughScheduled)laugh(9,165,.7);document.body.classList.add('boo');setTimeout(()=>document.body.classList.remove('boo'),2500);} lastLap=lap; lastSec=null; zoneFired=false; laughScheduled=false; }
-  if(rem===1&&!laughScheduled&&!seeking&&!pausedAt){laughScheduled=true;laugh(9,165,.7,remMs/1000);vib(remMs);duck(1.4);}
+  if(lap!==lastLap){ if(lastLap){if(!laughScheduled)laugh(9,165,.7);document.body.classList.add('boo');setTimeout(()=>document.body.classList.remove('boo'),2500);} lastLap=lap; lastSec=null; zoneFired=false; laughScheduled=false;hapticMilestones.clear(); }
+  if(!seeking&&!pausedAt){
+    [[10,[45]],[5,[55,70,55]],[1,[150]]].forEach(([mark,pattern])=>{
+      if(rem<=mark&&!hapticMilestones.has(mark)){hapticMilestones.add(mark);buzz(pattern)}
+    });
+  }
+  if(rem===1&&!laughScheduled&&!seeking&&!pausedAt){laughScheduled=true;laugh(9,165,.7,remMs/1000);duck(1.4);}
   if(rem!==lastSec){
     lastSec=rem;
     if(seeking||pausedAt){}
@@ -61,39 +67,24 @@ async function loadLaugh(){
   return laughBuf;
 }
 // n>=9: rire complet ; n>=3: début du rire ; sinon: un court "ha"
-let lastLaugh=null,laughScheduled=false,laughBus=null,vibT=null;
-// ---- Vibration : Android = navigator.vibrate, iPhone = astuce du "switch" (taptic) ----
-const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-const HAPTIC_OK=!!navigator.vibrate||IOS;
-let hapLb=null,buzzIds=[];
-if(IOS&&!navigator.vibrate){
-  const inp=document.createElement('input');inp.type='checkbox';inp.id='hapsw';inp.setAttribute('switch','');
-  const lb=document.createElement('label');lb.htmlFor='hapsw';
-  const css='position:fixed;left:-120px;top:0;width:60px;height:30px;opacity:0;pointer-events:none';
-  inp.style.cssText=css;lb.style.cssText=css;
-  document.body.appendChild(inp);document.body.appendChild(lb);hapLb=lb;
+let lastLaugh=null,laughScheduled=false,laughBus=null;
+// Safari sur iOS n'expose généralement pas l'API Vibration du Web.
+const HAPTIC_SUPPORTED=typeof navigator.vibrate==='function';
+if(!HAPTIC_SUPPORTED){
+  $('vibe').checked=false;
+  $('vibe').disabled=true;
+  $('haptic-note').textContent='La vibration web n’est pas disponible dans ce navigateur. Les alertes visuelles et sonores restent actives.';
+  $('haptic-note').hidden=false;
 }
-function hapTick(){try{hapLb&&hapLb.click()}catch(e){}}
-function buzz(p){
-  buzzStop();
-  if(navigator.vibrate)return navigator.vibrate(p);
-  if(!hapLb)return false;
-  let t=0;
-  p.forEach((d,i)=>{if(i%2===0){for(let k=0;k<d;k+=60)buzzIds.push(setTimeout(hapTick,t+k))}t+=d});
-  return true;
+function buzz(pattern){
+  if(!HAPTIC_SUPPORTED||!$('vibe').checked)return false;
+  try{navigator.vibrate(0);return navigator.vibrate(pattern)}catch(e){return false}
 }
-function buzzStop(){
-  try{if(navigator.vibrate)navigator.vibrate(0)}catch(e){}
-  buzzIds.forEach(clearTimeout);buzzIds=[];
-}
-function vib(delayMs){
-  clearTimeout(vibT);
-  if(!$('vibe').checked||!HAPTIC_OK)return;
-  vibT=setTimeout(()=>{try{buzz([700,150,700,150,1000])}catch(e){}},Math.max(0,delayMs));
-}
+function buzzStop(){if(HAPTIC_SUPPORTED){try{navigator.vibrate(0)}catch(e){}}}
+$('vibe').addEventListener('change',()=>{if(!$('vibe').checked)buzzStop()});
 function stopLaugh(){
   try{lastLaugh&&lastLaugh.stop()}catch(e){}lastLaugh=null;laughScheduled=false;
-  clearTimeout(vibT);try{buzzStop()}catch(e){}
+  try{buzzStop()}catch(e){}
 }
 function laugh(n=9,base=165,vol=.7,when=0){
   loadLaugh().then(buf=>{
@@ -236,7 +227,7 @@ async function lock(){try{wl=await navigator.wakeLock.request('screen')}catch(e)
 $('start').onclick=()=>{
   if(startAt)return;
   ensureAudioContext();
-  startAt=Date.now();lastLap=0;lock();loadLaugh().catch(()=>{});
+  startAt=Date.now();lastLap=0;hapticMilestones.clear();lock();loadLaugh().catch(()=>{});
   try{speechSynthesis.getVoices();const u0=new SpeechSynthesisUtterance(' ');u0.volume=0;speechSynthesis.speak(u0)}catch(e){}
   $('start').textContent='En cours…';$('start').disabled=true;$('pause').disabled=false;$('seek').disabled=false;
   tick();timer=setInterval(tick,200);
@@ -246,7 +237,7 @@ let resetT=null;
 function fullReset(){
   clearTimeout(resetT);resetT=null;stopLaugh();
   musicStop();clearInterval(timer);timer=null;
-  startAt=null;pausedAt=null;seeking=false;lastLap=0;lastSec=null;zoneFired=false;musTest=false;
+  startAt=null;pausedAt=null;seeking=false;lastLap=0;lastSec=null;zoneFired=false;musTest=false;hapticMilestones.clear();
   try{speechSynthesis.cancel()}catch(e){}
   try{wl&&wl.release()}catch(e){}
   document.body.classList.remove('paused','zone','boo','hot','crit');
@@ -301,6 +292,7 @@ seekEl.addEventListener('pointerdown',()=>{seeking=true});
 seekEl.addEventListener('input',()=>{
   if(!startAt)return;
   stopLaugh();
+  hapticMilestones.clear();
   const lapMs=Math.max(0.1,parseFloat($('dur').value)||60)*60000;
   const L=Math.floor((nowT()-startAt)/lapMs);
   const target=Math.min(parseFloat(seekEl.value),lapMs/1000-1)*1000;
@@ -431,7 +423,7 @@ function showMsg(m){
   if(left<=0||age>6*3600e3){el.hidden=true;return}
   el.textContent=m.text;el.hidden=false;
   if(isFinite(left))bcastT=setTimeout(()=>{el.hidden=true},left);
-  if(m.id!==lastMsgId){lastMsgId=m.id;chime();if(m.say)say(m.text)}
+  if(m.id!==lastMsgId){lastMsgId=m.id;chime();buzz([50,70,50]);if(m.say)say(m.text)}
 }
 function postMsg(m){fetch(MSGT,{method:'POST',body:JSON.stringify(m)}).catch(()=>{})}
 if(sync.canWrite){
