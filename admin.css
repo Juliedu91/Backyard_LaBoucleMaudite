@@ -1,0 +1,263 @@
+.admin-app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-top: 12px;
+  text-align: left;
+}
+
+body {
+  align-items: flex-start;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--mut);
+  text-decoration: none;
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.admin-app h1 {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.admin-intro {
+  margin: 0 auto 22px;
+  color: var(--mut);
+  text-align: center;
+}
+
+.admin-panel {
+  padding: 20px;
+}
+
+.admin-panel h2,
+.dashboard-heading h2 {
+  margin: 0;
+  color: var(--fg);
+  font-family: "Lilita One", "Arial Black", Impact, sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.admin-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--mut);
+  font-size: 13px;
+}
+
+.admin-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  background: #1a0b2e;
+  color: var(--fg);
+  font: inherit;
+}
+
+.admin-form input:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+.admin-form button {
+  min-width: 128px;
+  min-height: 46px;
+  font-size: 20px;
+}
+
+.form-message {
+  min-height: 18px;
+  margin: 8px 0 0;
+  color: var(--warn);
+  font-size: 13px;
+}
+
+.admin-help {
+  margin-top: 4px;
+}
+
+.admin-help p {
+  max-width: 760px;
+  margin-bottom: 0;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.connection-summary {
+  margin: 0;
+  color: var(--mut);
+  font-size: 13px;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.team-card {
+  min-width: 0;
+  padding: 18px;
+  text-align: left;
+}
+
+.team-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.team-name {
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-family: "Lilita One", "Arial Black", Impact, sans-serif;
+  font-size: 23px;
+  font-weight: 400;
+}
+
+.team-status {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid var(--bd);
+  border-radius: 999px;
+  color: var(--mut);
+  font-size: 12px;
+}
+
+.team-status.running {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.team-status.paused {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.team-status.disconnected {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.team-timer {
+  margin: 16px 0 2px;
+  color: #fff;
+  font-size: clamp(48px, 12vw, 76px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 18px rgba(255, 122, 26, .6);
+}
+
+.team-timer.warn {
+  color: var(--warn);
+}
+
+.team-timer.bad {
+  color: var(--bad);
+  text-shadow: 0 0 22px rgba(255, 59, 59, .75);
+}
+
+.team-lap {
+  color: var(--ok);
+  font-family: var(--fx);
+  font-size: 23px;
+  text-align: center;
+}
+
+.team-progress {
+  height: 9px;
+  margin: 12px 0;
+  overflow: hidden;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: #2a1647;
+}
+
+.team-progress-fill {
+  width: 0;
+  height: 100%;
+  background: var(--ok);
+  transition: width .2s linear, background .2s;
+}
+
+.team-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--mut);
+  font-size: 12px;
+}
+
+.team-connection {
+  margin: 14px 0 0;
+  color: var(--mut);
+  font-size: 12px;
+}
+
+.remove-team {
+  width: 100%;
+  margin-top: 14px;
+  padding: 8px;
+  font-size: 16px;
+}
+
+.empty-state {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px dashed var(--bd);
+  border-radius: 16px;
+  color: var(--mut);
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .admin-app {
+    padding-top: 0;
+  }
+
+  .admin-panel {
+    padding: 16px;
+  }
+
+  .admin-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form button {
+    width: 100%;
+  }
+
+  .dashboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
